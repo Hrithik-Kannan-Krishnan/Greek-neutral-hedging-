@@ -18,7 +18,7 @@ EXPECTED_COLS = {
     "hedge_strike", "hedge_dte", "primary_price", "hedge_price",
     "target_stock_shares", "target_hedge_contracts",
     "stock_trade_cost", "option_trade_cost", "bid_ask_cost",
-    "cash_balance", "interest_income",
+    "cash_balance", "interest_net",
     "net_delta", "net_gamma", "net_vega", "net_theta",
     "daily_pnl", "cumulative_pnl",
     "strategy",

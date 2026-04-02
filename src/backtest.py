@@ -181,13 +181,19 @@ def run_backtest(
             daily_pnl = stock_pnl + primary_pnl + hedge_pnl + interest - bid_ask_cost
         else:
             interest = 0.0
+            # First day: also charge bid-ask on initial primary option purchase
+            primary_entry_ba = n_primary_contracts * contract_multiplier * primary_price * bid_ask_spread
+            bid_ask_cost = stock_trade_cost + option_trade_cost + primary_entry_ba
             daily_pnl = -bid_ask_cost
 
         cumulative_pnl += daily_pnl
 
+        # Deduct primary purchase cost from cash on first day only
+        primary_cost = (n_primary_contracts * contract_multiplier * primary_price) if prev_spot is None else 0.0
         cash_balance -= (
             delta_stock * spot +
             delta_hedge_c * contract_multiplier * hedge_price +
+            primary_cost +
             bid_ask_cost
         )
 
@@ -227,7 +233,7 @@ def run_backtest(
             "option_trade_cost": option_trade_cost,
             "bid_ask_cost": bid_ask_cost,
             "cash_balance": cash_balance,
-            "interest_income": interest,
+            "interest_net": interest,
             "net_delta": net_delta,
             "net_gamma": net_gamma,
             "net_vega": net_vega,
