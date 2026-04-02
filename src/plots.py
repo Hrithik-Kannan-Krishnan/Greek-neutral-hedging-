@@ -7,8 +7,6 @@ from __future__ import annotations
 
 import os
 
-import matplotlib
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -105,6 +103,7 @@ def plot_greek_exposures(backtest_df: pd.DataFrame) -> plt.Figure:
         ax.axhline(0, color="black", linewidth=0.7, linestyle="--")
         ax.set_title(greek.replace("net_", "Net ").title())
         ax.set_xlabel("Date")
+        ax.set_ylabel(greek.replace("net_", "Net ").title())
         ax.tick_params(axis="x", rotation=30)
 
     strategy = df["strategy"].iloc[0] if "strategy" in df.columns and len(df) > 0 else "unknown"
