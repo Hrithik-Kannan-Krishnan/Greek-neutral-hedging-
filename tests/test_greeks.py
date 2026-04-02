@@ -44,6 +44,21 @@ def test_bs_call_price_delta_matches_greeks():
     assert abs(delta_d - delta_g) < 1e-10
 
 
+def test_bs_call_price_greeks_expiry_zero_atm():
+    # ATM at expiry: S == K, intrinsic = 0, delta convention = 0.5
+    price, delta, gamma, vega, theta = bs_call_price_greeks(100, 100, 0.0, 0.05, 0.20)
+    assert price == 0.0
+    assert delta == 0.5
+
+
+def test_bs_call_price_greeks_gamma_and_vega_numerical():
+    # ATM call: S=100, K=100, T=1, r=0.05, sigma=0.20
+    # Exact: gamma=0.018762, vega=37.524035
+    price, delta, gamma, vega, theta = bs_call_price_greeks(100, 100, 1.0, 0.05, 0.20)
+    assert abs(gamma - 0.018762) < 0.0005  # tight tolerance on exact value
+    assert abs(vega - 37.524) < 0.5        # per unit sigma; tight on exact value
+
+
 def test_heston_greeks_raises_if_quantlib_missing(monkeypatch):
     import builtins
     real_import = builtins.__import__

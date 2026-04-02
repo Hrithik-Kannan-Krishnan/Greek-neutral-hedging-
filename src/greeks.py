@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import warnings
 from typing import Tuple
 
 
@@ -11,13 +12,15 @@ def bs_call_price_greeks(
 
     Returns (price, delta, gamma, vega, theta) as a 5-float tuple.
     Handles degenerate cases (T<=0, sigma<=0, S<=0, K<=0) via intrinsic value.
+    Vega is expressed per unit of sigma (e.g. vega=37.5 means the option
+    gains 37.5 in value for a 1.0 increase in sigma, i.e. 100 vol points).
     """
     S, K, T, r, sigma = float(S), float(K), float(T), float(r), float(sigma)
 
     # Degenerate / edge case
     if T <= 0.0 or sigma <= 0.0 or S <= 0.0 or K <= 0.0:
         price = float(max(S - K, 0.0))
-        delta = 1.0 if S > K else 0.0
+        delta = 1.0 if S > K else (0.5 if S == K else 0.0)
         return (price, delta, 0.0, 0.0, 0.0)
 
     sqrt_T = math.sqrt(T)
@@ -31,7 +34,7 @@ def bs_call_price_greeks(
     price = S * N(d1) - K * math.exp(-r * T) * N(d2)
     delta = N(d1)
     gamma = n(d1) / (S * sigma * sqrt_T)
-    vega = S * n(d1) * sqrt_T
+    vega = S * n(d1) * sqrt_T  # per unit of sigma (1.0 = 100 vol points)
     theta = -(S * n(d1) * sigma) / (2.0 * sqrt_T) - r * K * math.exp(-r * T) * N(d2)
 
     return (price, delta, gamma, vega, theta)
@@ -110,9 +113,7 @@ def heston_greeks(
         theta_greek = float(option.thetaPerDay()) * 365.0
     except Exception:
         # Finite-difference fallback
-        h = 0.01
-        spot_up = ql.SimpleQuote(S + h)
-        spot_dn = ql.SimpleQuote(S - h)
+        h = max(1.0, S) * 1e-3
 
         def _price_with_spot(s_val: float) -> float:
             sq = ql.SimpleQuote(s_val)
@@ -143,6 +144,10 @@ def heston_greeks(
         vega_greek = (_price_with_v0(v0 + dv) - _price_with_v0(v0 - dv)) / (2.0 * dv)
 
         # Theta fallback via BS
+        warnings.warn(
+            "Heston theta: using BS approximation with spot vol sqrt(v0) as fallback.",
+            RuntimeWarning, stacklevel=2
+        )
         _, _, _, _, theta_greek = bs_call_price_greeks(S, K, T, r, math.sqrt(v0))
 
     return (price, delta_greek, gamma_greek, vega_greek, theta_greek)
