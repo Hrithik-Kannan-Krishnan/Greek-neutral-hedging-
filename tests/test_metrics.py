@@ -8,8 +8,10 @@ from src.metrics import sharpe_ratio, max_drawdown, pnl_volatility, total_hedge_
 
 
 def test_sharpe_ratio_zero_pnl():
+    # Zero PnL with a positive risk-free rate has negative excess return;
+    # the Sharpe should be negative (sentinel -1e6) not zero.
     pnl = pd.Series([0.0] * 252)
-    assert sharpe_ratio(pnl) == 0.0
+    assert sharpe_ratio(pnl) < 0
 
 
 def test_sharpe_ratio_positive():

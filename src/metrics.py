@@ -17,10 +17,13 @@ def sharpe_ratio(pnl_series: pd.Series, r_cash: float = 0.04) -> float:
     if np.isnan(std):
         return 0.0
     if std < 1e-10:
-        # If volatility is essentially zero, return sign of mean * large number
+        # Volatility is essentially zero: return signed sentinel so the caller
+        # can distinguish a persistently-positive from a persistently-negative strategy.
         mean_excess = excess.mean()
         if mean_excess > 0:
             return 1e6
+        elif mean_excess < 0:
+            return -1e6
         else:
             return 0.0
     return float((excess.mean() / std) * np.sqrt(252))
