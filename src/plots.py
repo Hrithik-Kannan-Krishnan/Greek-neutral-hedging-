@@ -11,8 +11,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from src.metrics import compare_strategies
-
 _OUTPUTS_DIR = "outputs"
 
 
@@ -21,34 +19,70 @@ def _ensure_outputs() -> None:
 
 
 def plot_cumulative_pnl(combined_df: pd.DataFrame) -> plt.Figure:
-    """Line chart of cumulative P&L per strategy, faceted by regime (low/medium/high).
+    """One subplot per strategy showing full cumulative P&L with regime background shading.
 
-    Saves to outputs/cumulative_pnl.png.
+    Lines are coloured by moneyness (ATM/ITM/OTM). Saves to outputs/cumulative_pnl.png.
     """
-    _ensure_outputs()
-    regimes = ["low", "medium", "high"]
-    strategies = sorted(combined_df["strategy"].unique())
-    colors = plt.cm.tab10(np.linspace(0, 0.8, max(len(strategies), 1)))
+    from matplotlib.patches import Patch
 
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4), sharey=False)
-    for ax, regime in zip(axes, regimes):
-        subset = combined_df[combined_df["regime"] == regime]
-        for strat, color in zip(strategies, colors):
-            s = subset[subset["strategy"] == strat].sort_values("date")
+    _ensure_outputs()
+    strategies = sorted(combined_df["strategy"].unique())
+    moneyness_types = ["ATM", "ITM", "OTM"]
+    mon_colors = {"ATM": "#1f77b4", "ITM": "#2ca02c", "OTM": "#d62728"}
+    regime_colors = {"low": "steelblue", "medium": "orange", "high": "tomato"}
+
+    ncols = 2
+    nrows = max(1, (len(strategies) + 1) // 2)
+    fig, axes = plt.subplots(nrows, ncols, figsize=(14, 5 * nrows), squeeze=False)
+
+    for idx, strat in enumerate(strategies):
+        ax = axes[idx // ncols][idx % ncols]
+        df_strat = combined_df[combined_df["strategy"] == strat].copy()
+
+        # Background shading by regime (group contiguous runs of same regime)
+        date_regime = (
+            df_strat.groupby("date")["regime"].first()
+            .reset_index()
+            .sort_values("date")
+        )
+        date_regime["run"] = (
+            date_regime["regime"] != date_regime["regime"].shift()
+        ).cumsum()
+        for _, span in date_regime.groupby("run"):
+            reg = span["regime"].iloc[0]
+            start = pd.Timestamp(span["date"].iloc[0])
+            end = pd.Timestamp(span["date"].iloc[-1])
+            ax.axvspan(start, end, alpha=0.1,
+                       color=regime_colors.get(reg, "grey"), linewidth=0)
+
+        # One line per moneyness type
+        for mon in moneyness_types:
+            s = df_strat[df_strat["moneyness"] == mon].sort_values("date")
             if s.empty:
                 continue
-            ax.plot(s["date"], s["cumulative_pnl"], label=strat, color=color, linewidth=1.5)
-        ax.set_title(f"Regime: {regime}")
+            ax.plot(s["date"], s["cumulative_pnl"], label=mon,
+                    color=mon_colors[mon], linewidth=1.5)
+
+        ax.axhline(0, color="black", linewidth=0.7, linestyle="--")
+        ax.set_title(strat.replace("_", "-"))
         ax.set_xlabel("Date")
         ax.set_ylabel("Cumulative P&L ($)")
-        ax.axhline(0, color="black", linewidth=0.7, linestyle="--")
         ax.tick_params(axis="x", rotation=30)
+        ax.legend(title="Moneyness", fontsize=8)
 
-    handles, labels = axes[0].get_legend_handles_labels()
-    if handles:
-        fig.legend(handles, labels, loc="upper center", ncol=len(strategies),
-                   bbox_to_anchor=(0.5, 1.02))
-    fig.tight_layout()
+    # Hide any unused subplots
+    for idx in range(len(strategies), nrows * ncols):
+        axes[idx // ncols][idx % ncols].set_visible(False)
+
+    # Regime colour legend shared across all subplots
+    regime_patches = [
+        Patch(facecolor=regime_colors[r], alpha=0.4, label=f"{r} vol")
+        for r in ["low", "medium", "high"]
+    ]
+    fig.legend(handles=regime_patches, loc="lower center", ncol=3,
+               title="VIX Regime", bbox_to_anchor=(0.5, 0.0), fontsize=9)
+    fig.suptitle("Cumulative P&L by Strategy and Moneyness", fontsize=13)
+    fig.tight_layout(rect=[0, 0.06, 1, 1])
     fig.savefig(os.path.join(_OUTPUTS_DIR, "cumulative_pnl.png"), dpi=120, bbox_inches="tight")
     return fig
 

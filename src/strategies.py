@@ -7,6 +7,8 @@ Greek tuples have the convention: (price, delta, gamma, vega, theta).
 """
 from __future__ import annotations
 
+# Convention: we are LONG n_primary primary call contracts and hedge the Greeks.
+
 _EPSILON = 1e-10  # near-zero guard
 
 

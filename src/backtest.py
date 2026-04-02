@@ -98,6 +98,7 @@ def run_backtest(
 
     P&L tracks: long n_primary primary options + stock hedge + hedge option,
     net of bid-ask transaction costs, including interest on cash balance.
+    Position convention: long n_primary_contracts primary calls, hedged via stock and/or hedge option.
     """
     if strategy not in _STRATEGY_MAP:
         raise ValueError(f"Unknown strategy '{strategy}'. Choose from: {list(_STRATEGY_MAP)}")
@@ -128,10 +129,16 @@ def run_backtest(
             (option_chain_df["option_type"] == "call")
         ]
         if day_chain.empty:
+            prev_spot = None
+            prev_primary_price = None
+            prev_hedge_price = None
             continue
 
         primary_row = _select_primary(day_chain, spot, moneyness, primary_dte)
         if primary_row is None:
+            prev_spot = None
+            prev_primary_price = None
+            prev_hedge_price = None
             continue
 
         primary_strike = float(primary_row["strike"])
@@ -141,6 +148,9 @@ def run_backtest(
 
         hedge_row = _select_hedge(day_chain, primary_strike, spot, hedge_dte)
         if hedge_row is None:
+            prev_spot = None
+            prev_primary_price = None
+            prev_hedge_price = None
             continue
 
         hedge_strike = float(hedge_row["strike"])
@@ -196,6 +206,7 @@ def run_backtest(
             primary_cost +
             bid_ask_cost
         )
+        cash_balance += interest
 
         net_delta = (
             n_primary_contracts * contract_multiplier * primary_greeks[1] +

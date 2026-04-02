@@ -251,7 +251,6 @@ def fetch_market_inputs(
 # =========================================================
 # Synthetic full daily option chain
 # =========================================================
- # For reproducibility of synthetic IV noise
 def simulate_daily_option_chain(
     ticker: str,
     merged_df: pd.DataFrame,
