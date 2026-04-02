@@ -78,7 +78,8 @@ def delta_theta_neutral(
 ) -> tuple[int, int]:
     """Delta- and theta-neutral hedge using a hedge option and stock.
 
-    First neutralises theta with the hedge option, then residual delta with stock.
+    First neutralises theta with the hedge option (both call thetas are negative,
+    so the hedge will typically be short), then residual delta with stock.
     """
     _, delta_p, _, _, theta_p = primary_greeks
     _, delta_h, _, _, theta_h = hedge_greeks
