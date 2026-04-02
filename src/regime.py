@@ -5,6 +5,8 @@ import pandas as pd
 
 def classify_vix(vix_value: float) -> str:
     """Classify VIX into low (<15) / medium (15-25) / high (>25) volatility regime."""
+    if vix_value != vix_value:  # NaN check (NaN != NaN is True)
+        return "medium"         # treat missing VIX as medium regime
     if vix_value < 15:
         return "low"
     elif vix_value <= 25:
