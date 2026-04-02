@@ -1,2 +1,14 @@
-# Greek-neutral-hedging-
-when you sell (short) an options contract, you are exposed to risk from multiple directions simultaneously. Price moves, volatility shifts, and time decay all work against you differently. The project asks: which hedging strategy best protects against those risks, and at what cost?
+# DBA5109 Group Project
+
+## Setup
+pip install -r requirements.txt
+
+## Data
+Download your CSV files and place them in the data/ folder:
+- data/prices.csv
+- data/vix.csv
+- data/options_chain.csv (if using DoltHub)
+
+## Running
+Open notebook.ipynb and run cells top to bottom.
+All source code lives in src/.
