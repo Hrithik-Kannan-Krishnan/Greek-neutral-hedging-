@@ -159,10 +159,15 @@ def fetch_market_inputs(
     ticker: str,
     months: int = 3,
     end_date: str | None = None,
-    # rate_series: str = "DGS3MO",
+    rate_series: str = "DGS3MO",
 ):
     """
-    Fetch stock OHLCV, VIX, and FRED 3M Treasury rate for the last `months` months.
+    Fetch stock OHLCV, VIX, and a risk-free rate proxy for the last `months` months.
+
+    Notes:
+    - `rate_series` is accepted for backward compatibility with older notebooks that
+      selected a FRED series. The current implementation sources rates from `^IRX`
+      via yfinance, so the argument is not used yet.
     """
     if end_date is None:
         end = pd.Timestamp.today().normalize()
@@ -342,7 +347,7 @@ def build_synthetic_market_dataset(
     ticker: str,
     months: int = 3,
     end_date: str | None = None,
-    # rate_series: str = "DGS3MO",
+    rate_series: str = "DGS3MO",
     expiry_days=(7, 14, 21, 30, 45, 60, 90),
 ):
     """
@@ -359,7 +364,7 @@ def build_synthetic_market_dataset(
         ticker=ticker,
         months=months,
         end_date=end_date,
-        # rate_series=rate_series,
+        rate_series=rate_series,
     )
 
     option_chain_df = simulate_daily_option_chain(
@@ -387,7 +392,7 @@ if __name__ == "__main__":
         ticker="AAPL",      # change to SPY, MSFT, NVDA, etc.
         months=3,
         end_date=None,      # or "2026-03-31"
-        # rate_series="DGS3MO",
+        rate_series="DGS3MO",
         expiry_days=(7, 14, 21, 30, 45, 60, 90),
     )
 
