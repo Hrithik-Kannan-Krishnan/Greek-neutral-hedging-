@@ -4,7 +4,7 @@ import pandas as pd
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.fetch_data_hedging import build_synthetic_market_dataset
+from src.fetch_data_hedging_v2 import build_synthetic_market_dataset
 from src.backtest import run_backtest, run_full_comparison
 
 
